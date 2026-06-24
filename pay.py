@@ -1,32 +1,36 @@
-from datetime import date, timedelta
+from datetime import timedelta
 
-def pay_for_hours(hours_already,shift_hours=11.5):
+
+def pay_for_hours(hours_already, shift_hours=11.5):
     base_rate = 16.64
     premium_rate = 20.80
     weekly_base_cap = 40.25
 
+    # how many of this shift's hours are still at base rate
     base_remaining = max(0, weekly_base_cap - hours_already)
-    base_hours = max( shift_hours, base_remaining)
-    premium_hours =  shift_hours - base_hours
+    base_hours = min(shift_hours, base_remaining)
+    premium_hours = shift_hours - base_hours
 
     pay = base_hours * base_rate + premium_hours * premium_rate
     return pay
 
-def pay_day(start_date):
-    weekday = start_date.weekday()
 
-    if weekday == 6:  # Sunday
+def pay_day(start_date):
+    weekday = start_date.weekday()  # Monday=0 ... Sunday=6
+
+    if weekday == 6:  # Sunday: first day of a fresh week
         days_to_saturday = 6
-    else:
+    else:  # Monday to Saturday
         days_to_saturday = 5 - weekday
 
     week_end_saturday = start_date + timedelta(days=days_to_saturday)
-    return week_end_saturday + timedelta(days=6)
+    return week_end_saturday + timedelta(days=6)  # the Friday after
+
 
 def weekly_totals(dates):
     dates = sorted(dates)
-    hours_so_far = {}
-    totals = {}
+    hours_so_far = {}  # hours worked per pay week
+    totals = {}        # pay per pay week
 
     for d in dates:
         friday = pay_day(d)
@@ -37,7 +41,7 @@ def weekly_totals(dates):
         hours_so_far[friday] = used + 11.5
         totals[friday] = totals.get(friday, 0) + pay
 
-        return totals
+    return totals
 
 
 def income_tax(annual_income):
