@@ -1,26 +1,16 @@
-import calendar
 from datetime import date, timedelta
 
-
-def pay_for_shift(position):
-    paid_hours = 11.5
+def pay_for_hours(hours_already,shift_hours=11.5):
     base_rate = 16.64
-    premium_rate = 18.64
+    premium_rate = 20.80
+    weekly_base_cap = 40.25
 
-    if position <= 4:
-        rate = base_rate
-    else:
-        rate = premium_rate
+    base_remaining = max(0, weekly_base_cap - hours_already)
+    base_hours = max( shift_hours, base_remaining)
+    premium_hours =  shift_hours - base_hours
 
-    return rate * paid_hours
-
-
-def total_for_run(num_shifts):
-    total = 0
-    for position in range(1, num_shifts + 1):
-        total += pay_for_shift(position)
-    return total
-
+    pay = base_hours * base_rate + premium_hours * premium_rate
+    return pay
 
 def pay_day(start_date):
     weekday = start_date.weekday()
@@ -33,38 +23,21 @@ def pay_day(start_date):
     week_end_saturday = start_date + timedelta(days=days_to_saturday)
     return week_end_saturday + timedelta(days=6)
 
-
-def assign_positions(dates):
-    dates = sorted(dates)
-    result = []
-    position = 0
-    previous = None
-
-    for d in dates:
-        if previous is not None and d == previous + timedelta(days=1):
-            position += 1
-        else:
-            position = 1
-        result.append((d, position))
-        previous = d
-
-    return result
-
-
 def weekly_totals(dates):
-    shifts = assign_positions(dates)
+    dates = sorted(dates)
+    hours_so_far = {}
     totals = {}
 
-    for d, position in shifts:
+    for d in dates:
         friday = pay_day(d)
-        pay = pay_for_shift(position)
+        used = hours_so_far.get(friday, 0)
 
-        if friday in totals:
-            totals[friday] = totals[friday] + pay
-        else:
-            totals[friday] = pay
+        pay = pay_for_hours(used)
 
-    return totals
+        hours_so_far[friday] = used + 11.5
+        totals[friday] = totals.get(friday, 0) + pay
+
+        return totals
 
 
 def income_tax(annual_income):
